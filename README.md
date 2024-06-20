@@ -1,5 +1,14 @@
-# SenSys2021-NELoRa
+# SenSys2021-NELoRa-Eco
+Usability improvement on the original repo hanqingguo/NELoRa-Sensys
+Now for both nelora and baseline train/test, no need for a separate stage of data-generation (adding artificial noise). 
+Noise is added on-the-fly.
+This reduces overfitting issues and removes the need for additional harddisk space, also speeding up the process drastically.
+Changes are kept minimum for consistency. Other usability issues, like data balancing and testing during training, are not addressed.
 
+For decoding, read neural_enhanced_demodulation/README.md.
+neural-based decoding is in neural_enhanced_demodulation/pytorch, baseline method is in neural_enhanced_demodulation/matlab.
+
+====Readme from the original Repo====
 This repository provides the codes for our SenSys 2021 paper
 
 This repository contains scripts and instructions for reproducing the experiments in our SenSys '21 paper "[NELoRa: Towards Ultra-low SNR LoRa Communication with Neural-enhanced Demodulation](https://cse.msu.edu/~caozc/papers/sensys21-li.pdf)".

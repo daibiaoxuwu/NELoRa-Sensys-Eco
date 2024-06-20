@@ -197,10 +197,10 @@ def training_loop(training_dataloader_X, training_dataloader_Y, testing_dataload
 
     # Get some fixed data from domains X and Y for sampling. These are images that are held
     # constant throughout training, that allow us to inspect the model's performance.
-    fixed_X, name_X_fixed = test_iter_X.next()
+    fixed_X, name_X_fixed = next(test_iter_X)
     fixed_X = to_var(fixed_X)
 
-    fixed_Y, name_Y_fixed = test_iter_Y.next()
+    fixed_Y, name_Y_fixed = next(test_iter_Y)
     fixed_Y = to_var(fixed_Y)
     # print("Fixed_X {}".format(fixed_X.shape))
     fixed_X_spectrum_raw = torch.stft(input=fixed_X, n_fft=opts.stft_nfft, hop_length=opts.stft_overlap,
@@ -219,14 +219,14 @@ def training_loop(training_dataloader_X, training_dataloader_Y, testing_dataload
             iter_X = iter(training_dataloader_X)
             iter_Y = iter(training_dataloader_Y)
 
-        images_X, name_X = iter_X.next()
+        images_X, name_X = next(iter_X)
         labels_X_mapping = list(
-            map(lambda x: int(x.split('_')[5]), name_X))
+            map(lambda x: int(os.path.basename(x).split('_')[1]), name_X))
         images_X, labels_X = to_var(images_X), to_var(
             torch.tensor(labels_X_mapping))
-        images_Y, name_Y = iter_Y.next()
+        images_Y, name_Y = next(iter_Y)
         labels_Y_mapping = list(
-            map(lambda x: int(x.split('_')[5]), name_Y))
+            map(lambda x: int(os.path.basename(x).split('_')[1]), name_Y))
         images_Y, labels_Y = to_var(images_Y), to_var(
             torch.tensor(labels_Y_mapping))
 
@@ -282,32 +282,32 @@ def training_loop(training_dataloader_X, training_dataloader_Y, testing_dataload
     test_iter_Y = iter(testing_dataloader_Y)
     iter_per_epoch_test = min(len(test_iter_X), len(test_iter_Y))
 
-    error_matrix = np.zeros([len(opts.snr_list), 1], dtype=float)
-    error_matrix_count = np.zeros([len(opts.snr_list), 1], dtype=int)
+    error_matrix = np.zeros([1, 1], dtype=float)
+    error_matrix_count = np.zeros([1, 1], dtype=int)
 
     error_matrix_info = []
 
     # iter_per_epoch_test = 500
     saved_data = {}
     for iteration in range(iter_per_epoch_test):
-        images_X_test, name_X_test = test_iter_X.next()
+        images_X_test, name_X_test = next(test_iter_X)
 
         code_X_test_mapping = list(
-            map(lambda x: float(x.split('_')[0]), name_X_test))
+            map(lambda x: float(os.path.basename(x).split('_')[0]), name_X_test))
 
         snr_X_test_mapping = list(
-            map(lambda x: int(x.split('_')[1]), name_X_test))
+            map(lambda x: int(os.path.basename(x).split('_')[1]), name_X_test))
 
         instance_X_test_mapping = list(
-            map(lambda x: int(x.split('_')[4]), name_X_test))
+            map(lambda x: int(os.path.basename(x).split('_')[2]), name_X_test))
 
         labels_X_test_mapping = list(
-            map(lambda x: int(x.split('_')[5]), name_X_test))
+            map(lambda x: int(os.path.basename(x).split('_')[1]), name_X_test))
 
         images_X_test, labels_X_test = to_var(images_X_test), to_var(
             torch.tensor(labels_X_test_mapping))
 
-        images_Y_test, labels_Y_test = test_iter_Y.next()
+        images_Y_test, labels_Y_test = next(test_iter_Y)
         images_Y_test = to_var(images_Y_test)
 
         images_X_test_spectrum_raw = torch.stft(input=images_X_test, n_fft=opts.stft_nfft,
@@ -334,28 +334,25 @@ def training_loop(training_dataloader_X, training_dataloader_Y, testing_dataload
         test_right_case = (labels_X_test_estimated == labels_X_test)
         test_right_case = to_data(test_right_case)
 
-        for batch_index in range(opts.batch_size):
-            try:
-                snr_index = opts.snr_list.index(snr_X_test_mapping[batch_index])
+        for batch_index in range(len(instance_X_test_mapping)):
+                snr_index = 0
                 error_matrix[snr_index] += test_right_case[batch_index]
                 error_matrix_count[snr_index] += 1
                 error_matrix_info.append([instance_X_test_mapping[batch_index], code_X_test_mapping[batch_index],
-                                          snr_X_test_mapping[batch_index],
+                                          0,
                                           labels_X_test_estimated[batch_index].cpu().data.int(),
                                           labels_X_test[batch_index].cpu().data.int()])
-            except:
-                print("Something else went wrong")
         if iteration % opts.log_step == 0:
             print('Testing Iteration [{:5d}/{:5d}]'
                   .format(iteration, iter_per_epoch_test))
     error_matrix = np.divide(error_matrix, error_matrix_count)
     error_matrix_info = np.array(error_matrix_info)
+    print('Accuracy:', error_matrix[0, 0])
     scipy.io.savemat(
         opts.root_path + '/' + opts.dir_comment + '_' + str(opts.sf) + '_' + str(opts.bw) + '.mat',
         dict(error_matrix=error_matrix,
              error_matrix_count=error_matrix_count,
              error_matrix_info=error_matrix_info))
 
-    with open('test.npy', 'wb') as f:
-        np.save(f, saved_data)
-        f.close()
+    with open('results.txt', 'a') as f:
+        f.write(str(opts.snr) + ' ' + str(error_matrix[0,0]) + '\n')

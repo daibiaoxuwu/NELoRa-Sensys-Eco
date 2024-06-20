@@ -44,7 +44,7 @@ def create_parser():
         '--normalization',
         action='store_true',
         default=False,
-        help='Choose whether to include the cycle consistency term in the loss.'
+        help='[RECOMMENDED to set TRUE] Choose whether to include the cycle consistency term in the loss.'
     )
 
     parser.add_argument(
@@ -68,7 +68,7 @@ def create_parser():
         type=int,
         default=100000,
         help=
-        'The number of training iterations to run (you can Ctrl-C out earlier if you want).'
+        'will load [evaluations_dir]/[dir_comment]_[checkpoint_dir]/[load_iters]_[C_XtoY|maskCNN].pkl'
     )
     parser.add_argument('--batch_size',
                         type=int,
@@ -86,8 +86,7 @@ def create_parser():
                         help='The learning rate (default 0.0003)')
     parser.add_argument('--sorting_type',
                         type=int,
-                        default=4,
-                        choices=[4],
+                        default=-1,
                         help='The index for the selected domain.')
     parser.add_argument('--scaling_for_imaging_loss',
                         type=int,
@@ -110,19 +109,14 @@ def create_parser():
     parser.add_argument('--evaluations_dir',
                         type=str,
                         default='evaluations',
-                        help='Choose the root path to rf signals.')
+                        help='determine the [evaluations_dir]/[dir_comment]_[sample_dir] for spectrograms and [evaluations_dir]/[dir_comment]_[checkpoint_dir] for checkpoint save and load')
     parser.add_argument('--data_dir',
                         type=str,
-                        default='/data/Lora/sf7_125k',
-                        help='Choose the root path to rf signals.',
-                        choices=['/data/Lora/sf7_125k'])
+                        default='/path/to/raw_sf7_cross_instance',
+                        help='Choose the root path to rf signals /path/to/raw_sf7_cross_instance.')
 
     parser.add_argument('--network', type=str, default='end2end', choices=['end2end', 'end2end_fig4', 'end2end_real'])
 
-    parser.add_argument('--feature_name',
-                        type=str,
-                        default='chirp',
-                        choices=['chirp'])
     parser.add_argument('--groundtruth_code',
                         type=str,
                         default='35',
@@ -132,6 +126,7 @@ def create_parser():
                         default=[round(i, 1) for i in list(np.arange(0, 128, 0.1))],
                         type=float)
     parser.add_argument("--snr_list", nargs='+', default=list(range(-25, 16)), type=int)  # for train: -25:0, test: -40, 16
+    parser.add_argument("--snr", type=int, default=-17)
     parser.add_argument(
         "--bw_list",
         nargs='+',
@@ -155,14 +150,13 @@ def create_parser():
 
     parser.add_argument('--checkpoint_dir',
                         type=str,
-                        default='checkpoints')
-    parser.add_argument('--dir_comment', type=str, default='None')
-    parser.add_argument('--sample_dir', type=str, default='samples')
-    parser.add_argument('--testing_dir', type=str, default='testing')
+                        default='checkpoints', help='Chekpoints of the model are loaded, with --load flag, and saved, to [evaluations_dir]/[dir_comment]_[checkpoint_dir]')
+    parser.add_argument('--dir_comment', type=str, default='v0', help='determine the [evaluations_dir]/[dir_comment]_[sample_dir] for spectrograms and [evaluations_dir]/[dir_comment]_[checkpoint_dir] for checkpoint save and load')
+    parser.add_argument('--sample_dir', type=str, default='samples', help='during training, masked spectrograms are saved to [evaluations_dir]/[dir_comment]_[sample_dir] for inspection')
     # parser.add_argument('--load', type=str, default='pre_trained')
-    parser.add_argument('--load', type=str, default=None)
-    parser.add_argument('--log_step', type=int, default=1000)
-    parser.add_argument('--sample_every', type=int, default=10000)
-    parser.add_argument('--checkpoint_every', type=int, default=5000)
+    parser.add_argument('--load', action='store_true', default=False, help='Whether to load a checkpoint from file before training')
+    parser.add_argument('--log_step', type=int, default=1000, help='How many steps for each time a log is printed on console')
+    parser.add_argument('--sample_every', type=int, default=10000, help=r'How many steps for each time a sample of the masked spectrograms are saved to [evaluations_dir]/[dir_comment]_[sample_dir]')
+    parser.add_argument('--checkpoint_every', type=int, default=5000, help=r'How many steps for each time a checkpoint of the model during training is saved to [evaluations_dir]/[dir_comment]_[checkpoint_dir]')
 
     return parser

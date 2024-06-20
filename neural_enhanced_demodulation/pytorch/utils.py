@@ -1,5 +1,6 @@
 """Helpful functions for project."""
 import os
+import re
 import torch
 from torch.autograd import Variable
 
@@ -50,46 +51,33 @@ def generate_dataset(root_path, data_dir, ratio_bt_train_and_test,
                      code_list, snr_list, bw_list, sf_list,
                      instance_list, sorting_type):
     data_src = os.path.join(root_path, data_dir)
-    for _, _, files in os.walk(data_src):
-        files_filtered = list(
-            filter(
-                lambda x:
-                (int(x[:-4].split('_')[1]) in snr_list) and
-                (int(x[:-4].split('_')[2]) in sf_list) and
-                (int(x[:-4].split('_')[3]) in bw_list) and
-                (int(x[:-4].split('_')[4]) in instance_list), files))
-        if sorting_type != 0:
-            files_filtered.sort(
-                key=lambda x: (int(x[:-4].split('_')[sorting_type]), float(x[:-4].split('_')[0])))
-        num_files = len(files_filtered)
-        num_train = int(num_files * ratio_bt_train_and_test)
-        files_filtered = np.array(files_filtered)
+    files = []
+    for root, _, iterfiles in os.walk(data_src):
+        for file_name in iterfiles:
+            if re.match(r'^[\d_]+$', file_name[:-4]):
+                file_path = os.path.join(root, file_name)
+                files.append(file_path)
 
-        files_train = files_filtered[0:num_train].tolist()
-        shuffle(files_train)
-        files_test = files_filtered[num_train:num_files].tolist()
-        shuffle(files_test)
+    files_filtered = files
+    '''files_filtered = list(
+        filter(
+            lambda x:
+            (int(x[:-4].split('_')[1]) in snr_list) and
+            (int(x[:-4].split('_')[2]) in sf_list) and
+            (int(x[:-4].split('_')[3]) in bw_list) and
+            (int(x[:-4].split('_')[4]) in instance_list), files))'''
+    files_filtered.sort( key=lambda x: (int(os.path.basename(x)[:-4].split('_')[sorting_type]), os.path.basename(x)[:-4]))
+    num_files = len(files_filtered)
+    num_train = int(num_files * ratio_bt_train_and_test)
+    files_filtered = np.array(files_filtered)
 
-        print("length of training and testing data is {},{}".format(len(files_train), len(files_test)))
+    files_train = files_filtered[0:num_train].tolist()
+    shuffle(files_train)
+    files_test = files_filtered[num_train:num_files].tolist()
+    shuffle(files_test)
+
+    print("length of training and testing data is {},{}".format(len(files_train), len(files_test)))
     return [files_train, files_test]
-
-
-def generate_dataset_overfitting(root_path, data_dir,
-                                 code_list, snr_list, bw_list, sf_list,
-                                 instance_list, sorting_type):
-    data_src = os.path.join(root_path, data_dir)
-    print(code_list, snr_list, sf_list, bw_list, instance_list)
-    for _, _, files in os.walk(data_src):
-        files_filtered = list(
-            filter(
-                lambda x:
-                (int(x[:-4].split('_')[1]) in snr_list) and
-                (int(x[:-4].split('_')[2]) in sf_list) and
-                (int(x[:-4].split('_')[3]) in bw_list) and
-                (int(x[:-4].split('_')[4]) in instance_list), files))
-        shuffle(files_filtered)
-    return [files_filtered, files_filtered]
-
 
 def set_gpu(free_gpu_id):
     """Converts numpy to variable."""

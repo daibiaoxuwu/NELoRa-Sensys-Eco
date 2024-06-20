@@ -1,0 +1,13 @@
+Put Your Downloaded Checkpoint Here By Default
+as stated in neural_enhanced_demodulation/README.md,
+
+1. Download the pretrained models from [here](https://drive.google.com/drive/folders/1At3KaE4TojL8YV3YM-DrDpiwmGkiQ--B?usp=sharing)
+
+There are two files 100000_maskCNN.pkl, 100000_C_XtoY.pkl
+Load them by setting 
+--load yes
+--load_iters 100000    
+--checkpoint_dir checkpoints (this is by default)
+--train_iters 0 (for direct testing)
+
+

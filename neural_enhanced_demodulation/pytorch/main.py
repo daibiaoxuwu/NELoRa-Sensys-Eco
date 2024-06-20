@@ -25,7 +25,6 @@ def main(opts):
     create_dir(opts.checkpoint_dir)
     if not opts.server:
         create_dir(opts.sample_dir)
-        create_dir(opts.testing_dir)
 
     # Start training
     set_gpu(opts.free_gpu_id)
@@ -58,11 +57,7 @@ if __name__ == "__main__":
 
     opts.checkpoint_dir = os.path.join(opts.evaluations_path, opts.dir_comment + "_" + opts.checkpoint_dir)
 
-    opts.testing_dir = os.path.join(opts.evaluations_path, opts.dir_comment + "_" + opts.testing_dir)
 
-    if opts.load:
-        opts.sample_dir += ("_" + opts.load)
-        opts.testing_dir += ("_" + opts.load)
 
     print_opts(opts)
 
