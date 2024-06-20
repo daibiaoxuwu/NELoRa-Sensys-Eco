@@ -126,7 +126,6 @@ def create_parser():
                         default=[round(i, 1) for i in list(np.arange(0, 128, 0.1))],
                         type=float)
     parser.add_argument("--snr_list", nargs='+', default=list(range(-25, 16)), type=int)  # for train: -25:0, test: -40, 16
-    parser.add_argument("--snr", type=int, default=-17)
     parser.add_argument(
         "--bw_list",
         nargs='+',

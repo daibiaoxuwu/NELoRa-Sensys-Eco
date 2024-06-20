@@ -60,7 +60,7 @@ Put the two files 100000_maskCNN.pkl, 100000_C_XtoY.pkl in the same folder as th
 
 2. run the following command:
 ```
-python main.py --data_dir /path/to/raw_sf7_cross_instance --normalization --train_iter 0 --ratio_bt_train_and_test 0.8 --load --load_iters 100000 --snr -17
+python main.py --data_dir /path/to/raw_sf7_cross_instance --normalization --train_iter 0 --ratio_bt_train_and_test 0.8 --load --load_iters 100000 
 ```
 Useful parameters:
  --batch_size: batch size,
@@ -72,10 +72,117 @@ Useful parameters:
  --ratio_bt_train_and_test the ratio between training and testing datasets, 0.8 means a 8:2 split
  --load Whether to load a checkpoint from file before training
  --log_step How many steps for each time a log is printed on console
- --sample_every How many steps for each time a sample of the masked spectrograms are saved to [evaluations_dir]/[dir_comment]_[sample_dir]
- --checkpoint_every How many steps for each time a checkpoint of the model during training is saved to [evaluations_dir]/[dir_comment]_[checkpoint_dir]
+ --sample_every How many steps for each time a sample of the masked spectrograms are saved to \[evaluations_dir\]/\[dir_comment\]\_\[sample_dir\]
+ --checkpoint\_every How many steps for each time a checkpoint of the model during training is saved to \[evaluations_dir\]/\[dir_comment\]\_\[checkpoint_dir\]
 
 3. Get a decode result with in your `pytorch/` directory.
+The results is also printed to console, in format {SNR} {ACC}
+typical result will be:
+```
+================================================================================
+                                      Opts
+--------------------------------------------------------------------------------
+                            free_gpu_id: -1
+                        x_image_channel: 2
+                        y_image_channel: 2
+                       conv_kernel_size: 3
+                      conv_padding_size: 1
+                               lstm_dim: 400
+                                fc1_dim: 600
+                                     sf: 7
+                                     bw: 125000
+                                     fs: 1000000
+                          normalization: 1
+                             load_iters: 100000
+                             batch_size: 8
+                            num_workers: 1
+                                     lr: 0.0002
+                           sorting_type: -1
+               scaling_for_imaging_loss: 128
+        scaling_for_classification_loss: 1
+                                  beta1: 0.5
+                                  beta2: 0.999
+                              root_path: ./
+                        evaluations_dir: evaluations
+                              data_dir: /data/djl/raw_sf7_cross_instance
+                                network: end2end
+                       groundtruth_code: 35
+                ratio_bt_train_and_test: 0.8
+                         checkpoint_dir: ./evaluations/v0_checkpoints
+                            dir_comment: v0
+                             sample_dir: ./evaluations/v0_samples
+                                   load: 1
+                               log_step: 1000
+                           sample_every: 10000
+                       checkpoint_every: 5000
+                              n_classes: 128
+                              stft_nfft: 1024
+                            stft_window: 64
+                           stft_overlap: 32
+                          conv_dim_lstm: 1024
+                              freq_size: 128
+                       evaluations_path: ./evaluations
+================================================================================
+length of training and testing data is 10959,2740
+Models moved to GPU.
+Testing Iteration [    0/14043]
+Testing Iteration [ 1000/14043]
+Testing Iteration [ 2000/14043]
+Testing Iteration [ 3000/14043]
+Testing Iteration [ 4000/14043]
+Testing Iteration [ 5000/14043]
+Testing Iteration [ 6000/14043]
+Testing Iteration [ 7000/14043]
+Testing Iteration [ 8000/14043]
+Testing Iteration [ 9000/14043]
+Testing Iteration [10000/14043]
+Testing Iteration [11000/14043]
+Testing Iteration [12000/14043]
+Testing Iteration [13000/14043]
+Testing Iteration [14000/14043]
+Accuracy:
+-25 0.1686131386861314
+-24 0.2029197080291971
+-23 0.2821167883211679
+-22 0.3627737226277372
+-21 0.48905109489051096
+-20 0.6145985401459854
+-19 0.745985401459854
+-18 0.8503649635036497
+-17 0.9065693430656935
+-16 0.9525547445255474
+-15 0.964963503649635
+-14 0.9744525547445255
+-13 0.9824817518248176
+-12 0.9890510948905109
+-11 0.9875912408759124
+-10 0.9927007299270073
+-9 0.9934306569343065
+-8 0.9919708029197081
+-7 0.9923357664233576
+-6 0.9945255474452555
+-5 0.9927007299270073
+-4 0.9937956204379562
+-3 0.9952554744525547
+-2 0.9963503649635036
+-1 0.9952554744525547
+0 0.9952554744525547
+1 0.9956204379562044
+2 0.9967153284671533
+3 0.9963503649635036
+4 0.9967153284671533
+5 0.997080291970803
+6 0.995985401459854
+7 0.997080291970803
+8 0.9985401459854014
+9 0.9956204379562044
+10 0.9945255474452555
+11 0.995985401459854
+12 0.997080291970803
+13 0.9978102189781022
+14 0.995985401459854
+15 0.9963503649635036
+```
 
 ### Evaluation ###
 
@@ -99,15 +206,9 @@ To train a model from scratch, we recommand you have a NVIDIA video card, and su
 
 2. run the following command:
 ```
-python main.py --data_dir /path/to/raw_sf7_cross_instance --normalization --train_iter 0 --ratio_bt_train_and_test 0.8 --snr 0
+python main.py --data_dir /path/to/raw_sf7_cross_instance --normalization --train_iter 0 --ratio_bt_train_and_test 0.8 
 ```
-First train the model at a high SNR (e.g. 0), then gradually descend the SNR.
-You can also use loops like 
-```
-for i in `seq 0 25`; do 
-    python main.py --data_dir /path/to/raw_sf7_cross_instance --normalization --train_iter 0 --ratio_bt_train_and_test 0.8 --snr -$i;
-done
-```
+The SNR range used in training is specified in '--snr_list' parameter. When training from scratch it is recommended to first train the model at a high SNR (e.g. 0), then gradually descend the SNR.
 
 3. Check your loss with the std print. e.g.:
    - __Iteration [ 1000/100000] | G_Y_loss: 5.5639| G_Image_loss: 2.6935| G_Class_loss: 2.8704__

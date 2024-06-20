@@ -282,8 +282,8 @@ def training_loop(training_dataloader_X, training_dataloader_Y, testing_dataload
     test_iter_Y = iter(testing_dataloader_Y)
     iter_per_epoch_test = min(len(test_iter_X), len(test_iter_Y))
 
-    error_matrix = np.zeros([1, 1], dtype=float)
-    error_matrix_count = np.zeros([1, 1], dtype=int)
+    error_matrix = np.zeros([len(opts.snr_list), 1], dtype=float)
+    error_matrix_count = np.zeros([len(opts.snr_list), 1], dtype=int)
 
     error_matrix_info = []
 
@@ -296,7 +296,7 @@ def training_loop(training_dataloader_X, training_dataloader_Y, testing_dataload
             map(lambda x: float(os.path.basename(x).split('_')[0]), name_X_test))
 
         snr_X_test_mapping = list(
-            map(lambda x: int(os.path.basename(x).split('_')[1]), name_X_test))
+            map(lambda x: int(os.path.basename(x).split('_')[-1]), name_X_test))
 
         instance_X_test_mapping = list(
             map(lambda x: int(os.path.basename(x).split('_')[2]), name_X_test))
@@ -334,25 +334,27 @@ def training_loop(training_dataloader_X, training_dataloader_Y, testing_dataload
         test_right_case = (labels_X_test_estimated == labels_X_test)
         test_right_case = to_data(test_right_case)
 
-        for batch_index in range(len(instance_X_test_mapping)):
-                snr_index = 0
+        for batch_index in range(len(test_right_case)):
+                snr_index = opts.snr_list.index(snr_X_test_mapping[batch_index])
                 error_matrix[snr_index] += test_right_case[batch_index]
                 error_matrix_count[snr_index] += 1
                 error_matrix_info.append([instance_X_test_mapping[batch_index], code_X_test_mapping[batch_index],
-                                          0,
+                                          snr_X_test_mapping[batch_index],
                                           labels_X_test_estimated[batch_index].cpu().data.int(),
                                           labels_X_test[batch_index].cpu().data.int()])
-        if iteration % opts.log_step == 0:
+        if iteration % opts.log_step == 0: 
             print('Testing Iteration [{:5d}/{:5d}]'
                   .format(iteration, iter_per_epoch_test))
     error_matrix = np.divide(error_matrix, error_matrix_count)
     error_matrix_info = np.array(error_matrix_info)
-    print('Accuracy:', error_matrix[0, 0])
+    print('Accuracy:')
+    with open('results.txt', 'a') as f:
+        for i in range(len(opts.snr_list)):
+            print(opts.snr_list[i], error_matrix[i][0])
+            f.write(str(error_matrix) + '\n')
     scipy.io.savemat(
         opts.root_path + '/' + opts.dir_comment + '_' + str(opts.sf) + '_' + str(opts.bw) + '.mat',
         dict(error_matrix=error_matrix,
              error_matrix_count=error_matrix_count,
              error_matrix_info=error_matrix_info))
 
-    with open('results.txt', 'a') as f:
-        f.write(str(opts.snr) + ' ' + str(error_matrix[0,0]) + '\n')

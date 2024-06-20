@@ -1,14 +1,14 @@
 # data_loader.py
 
 import os
+import random
+import math
+
 import torch
 from torch.utils.data import DataLoader
 from torch.utils import data
 import torch.nn.functional as F
 from scipy.ndimage.filters import uniform_filter1d 
-import math
-
-
 import scipy.io as scio
 import numpy as np
 from PIL import Image
@@ -28,32 +28,35 @@ class lora_dataset(data.Dataset):
     def __len__(self):
         'Denotes the total number of samples'
 
-        return len(self.data_lists)
+        return len(self.data_lists) * len(self.opts.snr_list)
 
     def __getitem__(self, index):
         'Generates one sample of data'
-        data_file_name = self.data_lists[index]
+        data_file_name = self.data_lists[index % len(self.data_lists)]
         with open(data_file_name, 'rb') as fid:
             nsamp = self.opts.n_classes * self.opts.fs // self.opts.bw 
             lora_img = torch.tensor(np.fromfile(fid, np.complex64, nsamp), dtype = torch.cfloat)
             assert lora_img.shape[0] == nsamp, data_file_name
  
         if not self.groundtruth:
-                nsamp = self.opts.n_classes * self.opts.fs // self.opts.bw 
-                mwin = nsamp//2
-                datain = lora_img[:]
-                A = uniform_filter1d(abs(datain),size=mwin) 
-                datain = datain[A >= max(A)/2] 
-                amp_sig = torch.mean(torch.abs(torch.tensor(datain))) 
-                 
-                amp = math.pow(0.1, self.opts.snr/20) * amp_sig
-                noise =  torch.tensor(amp / math.sqrt(2) * np.random.randn(nsamp) + 1j * amp / math.sqrt(2) * np.random.randn(nsamp), dtype = torch.cfloat)
+            snr = self.opts.snr_list[- index // len(self.data_lists)] # to make SNR from high to low in each epoch
+            nsamp = self.opts.n_classes * self.opts.fs // self.opts.bw 
+            mwin = nsamp//2
+            datain = lora_img[:]
+            A = uniform_filter1d(abs(datain),size=mwin) 
+            datain = datain[A >= max(A)/2] 
+            amp_sig = torch.mean(torch.abs(torch.tensor(datain))) 
+             
+            amp = math.pow(0.1, snr/20) * amp_sig
+            noise =  torch.tensor(amp / math.sqrt(2) * np.random.randn(nsamp) + 1j * amp / math.sqrt(2) * np.random.randn(nsamp), dtype = torch.cfloat)
 
-                lora_img = lora_img + noise
+            lora_img = lora_img + noise
+        else:
+            snr = self.opts.groundtruth_code
 
         data_per = torch.tensor(lora_img, dtype=torch.cfloat)
 
-        label_per = data_file_name[:-4]
+        label_per = data_file_name[:-4] + '_' + str(snr)
         return data_per, label_per
 
 
@@ -74,3 +77,4 @@ def lora_loader(opts, files_train, files_test, groundtruth):
                                  shuffle=False,
                                  num_workers=opts.num_workers)
     return training_dloader, testing_dloader
+
