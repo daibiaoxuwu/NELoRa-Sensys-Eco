@@ -8,7 +8,10 @@ Changes are kept minimum for consistency. Other usability issues, like data bala
 For decoding, read neural_enhanced_demodulation/README.md.
 neural-based decoding is in neural_enhanced_demodulation/pytorch, baseline method is in neural_enhanced_demodulation/matlab.
 
-====Readme from the original Repo====
+---
+
+Readme from the original repo:
+
 This repository provides the codes for our SenSys 2021 paper
 
 This repository contains scripts and instructions for reproducing the experiments in our SenSys '21 paper "[NELoRa: Towards Ultra-low SNR LoRa Communication with Neural-enhanced Demodulation](https://cse.msu.edu/~caozc/papers/sensys21-li.pdf)".

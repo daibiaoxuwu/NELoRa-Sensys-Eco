@@ -38,7 +38,7 @@ Each file name is:
 
 # Run Experiments and Validate Results
 
-### Direct Inference ###
+### Direct Inference
 
 1. Download the pretrained models from [here](https://drive.google.com/drive/folders/1At3KaE4TojL8YV3YM-DrDpiwmGkiQ--B?usp=sharing)
 There are two files 100000_maskCNN.pkl, 100000_C_XtoY.pkl.
@@ -59,7 +59,7 @@ So default checkpoint_path is './evaluations/v0_checkpoints'. You can see a stub
 Put the two files 100000_maskCNN.pkl, 100000_C_XtoY.pkl in the same folder as that txt. (By default dir_comment and evaluations_dir values)
 
 2. run the following command:
-```
+```bash
 python main.py --data_dir /path/to/raw_sf7_cross_instance --normalization --train_iter 0 --ratio_bt_train_and_test 0.8 --load --load_iters 100000 
 ```
 Useful parameters:
@@ -184,7 +184,7 @@ Accuracy:
 15 0.9963503649635036
 ```
 
-### Evaluation ###
+### Evaluation 
 
 1. Preparation:
   - Get baseline performance:
@@ -199,25 +199,28 @@ Accuracy:
 ![](./matlab/res/result.png)
 
 
-### From the Scratch ###
+### From the Scratch
 To train a model from scratch, we recommand you have a NVIDIA video card, and support cuda acceleration.
 
 1. Set the root path, data path, and evaluation_dir as above. 
 
 2. run the following command:
-```
+```bash
 python main.py --data_dir /path/to/raw_sf7_cross_instance --normalization --train_iter 0 --ratio_bt_train_and_test 0.8 
 ```
 The SNR range used in training is specified in '--snr_list' parameter. When training from scratch it is recommended to first train the model at a high SNR (e.g. 0), then gradually descend the SNR.
 
 3. Check your loss with the std print. e.g.:
-   - __Iteration [ 1000/100000] | G_Y_loss: 5.5639| G_Image_loss: 2.6935| G_Class_loss: 2.8704__
+
+   ```
+   Iteration [ 1000/100000] | G_Y_loss: 5.5639| G_Image_loss: 2.6935| G_Class_loss: 2.8704__
+   ```
    - G_Y_loss: G_Image_loss + G_Class_loss
    - G_Image_loss: The loss between groundtruth chirp and your denoised chirp.
    - G_Class_loss: The loss of decoding correct symbol compares with the {Code Label}
 NOTE: these are losses on the training dataset. Testing is only done after all training steps are completed (--train_iters).
 
-4. Check your samples in [evaluations_dir]:
+5. Check your samples in [evaluations_dir]:
 
 Example, a chirp code 24 under **-23** dB noise.
 
