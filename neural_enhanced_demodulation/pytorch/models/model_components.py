@@ -4,6 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import time
+import sys
 
 
 class classificationHybridModel(nn.Module):
@@ -94,22 +95,27 @@ class maskCNNModel(nn.Module):
             bidirectional=True)
 
         self.fc1 = nn.Linear(2 * opts.lstm_dim, opts.fc1_dim)
-        self.fc2 = nn.Linear(opts.fc1_dim, opts.freq_size * opts.y_image_channel)
+        self.fc2 = nn.Linear(opts.fc1_dim, opts.freq_size * opts.y_image_channel) #freq_size==n_classes
 
     def forward(self, x):
+        # B 2 H W
         out = x.transpose(2, 3).contiguous()
+        # B 2 W[33] H[128]
         out = self.conv(out)
+        # B 8 W[33] H[128]
         out = out.transpose(1, 2).contiguous()
+        # B W 8 H
         out = out.view(out.size(0), out.size(1), -1)
+        # B W 16*H
         out, _ = self.lstm(out)
         out = F.relu(out)
         out = self.fc1(out)
         out = F.relu(out)
-        out = self.fc2(out)
+        out = self.fc2(out) # B*W* (H*2)
 
-        out = out.view(out.size(0), out.size(1), self.opts.y_image_channel, -1)
+        out = out.view(out.size(0), out.size(1), self.opts.y_image_channel, -1)# B*W*2*H
         out = torch.sigmoid(out)
-        out = out.transpose(1, 2).contiguous()
-        out = out.transpose(2, 3).contiguous()
+        out = out.transpose(1, 2).contiguous()# B*2*W*H
+        out = out.transpose(2, 3).contiguous()# B*2*H*W
         masked = out * x  # out is mask, masked is denoised
         return masked
