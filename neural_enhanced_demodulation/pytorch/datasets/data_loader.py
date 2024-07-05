@@ -7,11 +7,8 @@ import math
 import torch
 from torch.utils.data import DataLoader
 from torch.utils import data
-import torch.nn.functional as F
 from scipy.ndimage.filters import uniform_filter1d 
-import scipy.io as scio
 import numpy as np
-from PIL import Image
 
 class lora_dataset(data.Dataset):
     'Characterizes a dataset for PyTorch'
@@ -56,7 +53,7 @@ class lora_dataset(data.Dataset):
 
         data_per = torch.tensor(lora_img, dtype=torch.cfloat)
 
-        label_per = data_file_name[:-4] + '_' + str(snr)
+        label_per = os.path.splitext(data_file_name)[0] + '_' + str(snr)
         return data_per, label_per
 
 
